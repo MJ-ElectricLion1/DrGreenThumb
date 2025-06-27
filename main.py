@@ -1,20 +1,32 @@
 import discord
+from discord.ext import commands
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+from keep_alive import keep_alive
 
-# Load keys from .env
+# Load .env variables
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
-# Initialize OpenAI client
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-
-# Set up Discord client
+# Set up bot
 intents = discord.Intents.default()
 intents.message_content = True
-discord_client = discord.Client(intents=intents)
+
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f"🌿 Dr. Green Thumb is online as {bot.user}! Ready to help your garden grow!")
+
+@bot.command()
+async def drg(ctx):
+    await ctx.send("🌿 Dr. Green Thumb reporting in! Type `!drg` to make sure I'm awake.")
+
+# Keep alive for Render (pretend web server)
+keep_alive()
+
+# Start bot
+bot.run(DISCORD_TOKEN)
 
 # Bot personality prompt
 SYSTEM_PROMPT = """
