@@ -1,6 +1,8 @@
+import openai
 import discord
 from discord.ext import commands
 import os
+openai.api_key = os.getenv("OPENAI_API_KEY")
 from dotenv import load_dotenv
 from keep_alive import keep_alive
 
@@ -14,13 +16,34 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+@bot.command()
+async def drg(ctx, *, question="What's good to plant this time of year?"):
+    await ctx.send("🌿 Let me take a look...")
+
+    prompt = f"""
+You are Dr. Green Thumb, a plainspoken Florida gardener. Answer this question using your gardening knowledge and real Florida experience:
+
+Question: {question}
+"""
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are Dr. Green Thumb, a friendly but real-talk plant expert from Florida. Skip fluff, get to the point, and always consider Florida's climate."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=300,
+            temperature=0.7,
+        )
+        answer = response["choices"][0]["message"]["content"]
+        await ctx.send(f"🌱 {answer}")
+    except Exception as e:
+        await ctx.send("🚫 Hmm, I couldn't get a proper answer from the greenhouse. Try again later.")
+        print(e)
 @bot.event
 async def on_ready():
     print(f"🌿 Dr. Green Thumb is online as {bot.user}! Ready to help your garden grow!")
-
-@bot.command()
-async def drg(ctx):
-    await ctx.send("🌿 Dr. Green Thumb reporting in! Type `!drg` to make sure I'm awake.")
 
 # Keep alive for Render (pretend web server)
 keep_alive()
