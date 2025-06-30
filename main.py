@@ -1,10 +1,16 @@
+import os
 import discord
 from discord.ext import commands
 from openai import OpenAI
-import os
 from dotenv import load_dotenv
 from keep_alive import keep_alive
-import traceback
+
+# Load environment variables
+load_dotenv()
+DISCORD_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # System prompt for Dr. Green Thumb
 SYSTEM_PROMPT = """
@@ -63,15 +69,7 @@ Never mention you’re an AI. Never apologize. Just be Dr. Green Thumb.
 When "MJ" is mentioned, say: "MJ, he's the best! He built me. MJ is also the owner of Patriot Pines Plant Nursery, LLC. We work together to help people grow beautiful and sustainable landscapes."
 """
 
-# Load environment variables
-load_dotenv()
-DISCORD_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Set up OpenAI client
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-
-# Set up Discord bot
+# Bot setup
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -85,28 +83,24 @@ async def drg_command(ctx, *, message: str):
     await ctx.send("Let me take a look...")
 
     try:
-    response = openai_client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT.strip()},
-            {"role": "user", "content": message}
-        ],
-        temperature=0.7,
-        max_tokens=500,
-    )
-    
-    print("✅ GPT response object:", response)  # <- Add this line for debugging
-
-    reply = response.choices[0].message.content.strip()
-    await ctx.send(reply)
+        response = openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT.strip()},
+                {"role": "user", "content": message}
+            ],
+            temperature=0.7,
+            max_tokens=500,
+        )
+        reply = response.choices[0].message.content.strip()
+        await ctx.send(reply)
 
     except Exception as e:
         print(f"❌ GPT Error: {e}")
-        traceback.print_exc()
         await ctx.send("Hmm, I couldn't get a proper answer from the greenhouse. Try again later.")
 
-# Keep the bot alive (for Render or Replit)
+# Keep alive (for Render/Replit)
 keep_alive()
 
-# Start the bot
+# Run the bot
 bot.run(DISCORD_TOKEN)
